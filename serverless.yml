@@ -1,0 +1,37 @@
+service: serverless-kotlin
+
+provider:
+  name: aws
+  runtime: java8
+  region: ${file(secrets.${self:provider.stage}.json):APP_AWS_REGION }
+  stage: ${opt:stage, 'dev'}
+  environment:
+    APP_AWS_REGION: ${file(secrets.${self:provider.stage}.json):APP_AWS_REGION }
+
+package:
+  artifact: build/libs/hello-dev-all.jar
+
+functions:
+  hello:
+    handler: com.serverless.Handler
+    events:
+      - http:
+          path: hello
+          method: get
+
+resources:
+  Resources:
+    UsersDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: email
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: email
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${file(secrets.${self:provider.stage}.json):EMAILTABLE }
